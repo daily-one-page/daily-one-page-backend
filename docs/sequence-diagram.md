@@ -931,34 +931,34 @@ end
 ### 8.1 캘린더 날짜 선택 시 통합 조회
 
 ```plantuml
-@startuml 캘린더 날짜 선택
+@startuml
+title Calendar Date Selection
 actor User
 participant Client
 participant Server
 database MySQL
 
-User -> Client: 캘린더에서 1월 25일 선택
-
-== 병렬 API 호출 ==
-par 습관 현황 조회
+User -> Client: Select January 25th from Calendar
+== Parallel API Calls ==
+par Habit Status
     Client -> Server: GET /habit-logs?date=2025-01-25
-    Server -> MySQL: HabitLog 조회
-    MySQL --> Server: 습관 현황
+    Server -> MySQL: Query HabitLog
+    MySQL --> Server: Habit Status
     Server --> Client: {logs: [...]}
-and 페이지 조회
+else Daily Pages
     Client -> Server: GET /daily-pages/2025-01-25
-    Server -> MySQL: DailyPage 조회
-    MySQL --> Server: 페이지 내용
+    Server -> MySQL: Query DailyPage
+    MySQL --> Server: Page Content
     Server --> Client: {content: "..."}
-and 피드백 조회
+else AI Feedback
     Client -> Server: GET /ai-feedback/2025-01-25
-    Server -> MySQL: AiFeedback 조회
-    MySQL --> Server: 피드백
+    Server -> MySQL: Query AiFeedback
+    MySQL --> Server: Feedback
     Server --> Client: {message: "..."}
 end
 
-Client -> Client: 3개 응답 병합
-Client --> User: 통합 화면 표시\n- 습관 체크 현황\n- 데일리 페이지\n- AI 피드백
+Client -> Client: Merge 3 Responses
+Client --> User: Display Unified Screen
 
 @enduml
 ```
