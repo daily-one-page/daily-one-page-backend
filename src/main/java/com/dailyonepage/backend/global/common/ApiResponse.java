@@ -1,0 +1,44 @@
+package com.dailyonepage.backend.global.common;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+/**
+ * API 공통 응답 포맷
+ *
+ * 성공: { "success": true, "data": {...}, "error": null }
+ * 실패: { "success": false, "data": null, "error": { "code": "...", "message": "..." } }
+ */
+@Getter
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ApiResponse<T> {
+
+    private final boolean success;
+    private final T data;
+    private final ErrorDetail error;
+
+    // 성공 응답 (데이터 포함)
+    public static <T> ApiResponse<T> success(T data) {
+        return new ApiResponse<>(true, data, null);
+    }
+
+    // 성공 응답 (데이터 없음)
+    public static <T> ApiResponse<T> success() {
+        return new ApiResponse<>(true, null, null);
+    }
+
+    // 실패 응답
+    public static <T> ApiResponse<T> error(String code, String message) {
+        return new ApiResponse<>(false, null, new ErrorDetail(code, message));
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class ErrorDetail {
+        private final String code;
+        private final String message;
+    }
+}
