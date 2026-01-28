@@ -1,5 +1,7 @@
 package com.dailyonepage.backend.global.config;
 
+import com.dailyonepage.backend.global.security.jwt.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -9,16 +11,17 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * Spring Security 설정
- *
- * TODO: JWT 인증 필터 추가 후 permitAll 범위 조정 필요
- * 현재는 개발 편의를 위해 모든 요청 허용
  */
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -36,15 +39,17 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         // 인증 관련 API 허용
                         .requestMatchers("/api/auth/**").permitAll()
-                        // TODO: 나머지는 인증 필요하도록 변경
-                        .anyRequest().permitAll()
+                        // 나머지는 인증 필요
+                        .anyRequest().authenticated()
                 )
                 // H2 Console은 iframe 사용하므로 허용
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 // 기본 로그인 폼 비활성화
                 .formLogin(AbstractHttpConfigurer::disable)
                 // HTTP Basic 인증 비활성화
-                .httpBasic(AbstractHttpConfigurer::disable);
+                .httpBasic(AbstractHttpConfigurer::disable)
+                // JWT 필터 추가
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
