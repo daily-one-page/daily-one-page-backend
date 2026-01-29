@@ -1,0 +1,91 @@
+{
+  "info": {
+    "name": "DailyOnePage API - AiFeedback",
+    "_postman_id": "daily-onepage-ai-feedback-api",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "AiFeedback",
+      "item": [
+        {
+          "name": "오늘의 피드백 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ai-feedback/today",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai-feedback", "today"]
+            }
+          }
+        },
+        {
+          "name": "특정 날짜 피드백 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ai-feedback?date=2025-01-29",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai-feedback"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2025-01-29"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "월별 피드백 히스토리",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ai-feedback/history?year=2025&month=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ai-feedback", "history"],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2025"
+                },
+                {
+                  "key": "month",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

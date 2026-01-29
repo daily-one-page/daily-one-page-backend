@@ -49,7 +49,11 @@ public enum ErrorCode {
 
     // DailyPage
     PAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "PAGE_001", "데일리 페이지를 찾을 수 없습니다."),
-    DUPLICATE_PAGE(HttpStatus.CONFLICT, "PAGE_002", "해당 날짜에 이미 페이지가 존재합니다.");
+    DUPLICATE_PAGE(HttpStatus.CONFLICT, "PAGE_002", "해당 날짜에 이미 페이지가 존재합니다."),
+
+    // AI Feedback
+    FEEDBACK_NOT_FOUND(HttpStatus.NOT_FOUND, "AI_001", "AI 피드백을 찾을 수 없습니다."),
+    NO_DATA_FOR_FEEDBACK(HttpStatus.BAD_REQUEST, "AI_002", "피드백을 생성할 데이터가 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
