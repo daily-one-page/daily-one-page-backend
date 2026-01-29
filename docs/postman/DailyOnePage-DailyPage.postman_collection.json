@@ -1,0 +1,183 @@
+{
+  "info": {
+    "name": "DailyOnePage API - DailyPage",
+    "_postman_id": "daily-onepage-daily-page-api",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "DailyPage",
+      "item": [
+        {
+          "name": "페이지 작성 (오늘)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"오늘 하루도 열심히 달렸다. 5km를 완주했고, 기분이 너무 좋다!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/daily-pages",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "daily-pages"]
+            }
+          }
+        },
+        {
+          "name": "페이지 작성 (특정 날짜)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2025-01-28\",\n  \"content\": \"어제 일기를 늦게 작성한다.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/daily-pages",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "daily-pages"]
+            }
+          }
+        },
+        {
+          "name": "오늘 페이지 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/daily-pages",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "daily-pages"]
+            }
+          }
+        },
+        {
+          "name": "특정 날짜 페이지 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/daily-pages?date=2025-01-29",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "daily-pages"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2025-01-29"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "월별 캘린더 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/daily-pages/calendar?year=2025&month=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "daily-pages", "calendar"],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2025"
+                },
+                {
+                  "key": "month",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "페이지 수정",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"수정된 내용입니다. 오늘 하루도 열심히!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/daily-pages/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "daily-pages", "1"]
+            }
+          }
+        },
+        {
+          "name": "페이지 삭제",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/daily-pages/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "daily-pages", "1"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
