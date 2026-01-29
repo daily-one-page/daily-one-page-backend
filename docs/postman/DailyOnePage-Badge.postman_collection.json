@@ -1,0 +1,98 @@
+{
+  "info": {
+    "name": "DailyOnePage API - Badge",
+    "_postman_id": "daily-onepage-badge-api",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Badge",
+      "item": [
+        {
+          "name": "내 뱃지 현황 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/badges/my",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "badges", "my"]
+            }
+          }
+        },
+        {
+          "name": "최근 획득 뱃지 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/badges/recent?limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "badges", "recent"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "시스템 뱃지세트 목록",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/badges/sets",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "badges", "sets"]
+            }
+          }
+        },
+        {
+          "name": "습관별 뱃지세트 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/badges/sets/habit/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "badges", "sets", "habit", "1"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
