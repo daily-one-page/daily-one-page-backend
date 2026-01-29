@@ -59,4 +59,15 @@ public class Habit {
     public boolean isCustomHabit() {
         return this.user != null;
     }
+
+    // 습관 정보 수정 (커스텀 습관만)
+    public void update(String name, HabitType type) {
+        this.name = name;
+        this.type = type;
+    }
+
+    // 소유자 확인
+    public boolean isOwnedBy(Long userId) {
+        return this.user != null && this.user.getId().equals(userId);
+    }
 }

@@ -38,6 +38,8 @@ public enum ErrorCode {
     HABIT_NOT_FOUND(HttpStatus.NOT_FOUND, "HABIT_001", "습관을 찾을 수 없습니다."),
     USER_HABIT_NOT_FOUND(HttpStatus.NOT_FOUND, "HABIT_002", "등록된 습관을 찾을 수 없습니다."),
     DUPLICATE_USER_HABIT(HttpStatus.CONFLICT, "HABIT_003", "이미 등록된 습관입니다."),
+    HABIT_NOT_OWNED(HttpStatus.FORBIDDEN, "HABIT_004", "해당 습관에 대한 권한이 없습니다."),
+    SYSTEM_HABIT_NOT_MODIFIABLE(HttpStatus.BAD_REQUEST, "HABIT_005", "시스템 습관은 수정/삭제할 수 없습니다."),
 
     // Badge
     BADGE_SET_NOT_FOUND(HttpStatus.NOT_FOUND, "BADGE_001", "뱃지 세트를 찾을 수 없습니다."),
