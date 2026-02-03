@@ -1,0 +1,1260 @@
+{
+  "info": {
+    "_postman_id": "daily-one-page-api-v2",
+    "name": "오늘한장 API v2",
+    "description": "오늘한장 습관 관리 앱 API - v2 명세서 기반\n\nBase URL: {{baseUrl}}\n인증 방식: JWT Bearer Token\n날짜 형식: YYYY-MM-DD",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Auth (인증)",
+      "description": "회원가입, 로그인, 토큰 재발급, 로그아웃 API",
+      "item": [
+        {
+          "name": "회원가입",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has success true\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains user ID\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"nickname\": \"테스트유저\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
+            },
+            "description": "회원가입 API\n\n**에러 코드:**\n- DUPLICATE_EMAIL: 이미 존재하는 이메일"
+          },
+          "response": []
+        },
+        {
+          "name": "로그인",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has success true\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains tokens\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.accessToken).to.be.a('string');",
+                  "    pm.expect(jsonData.data.refreshToken).to.be.a('string');",
+                  "    pm.expect(jsonData.data.expiresIn).to.be.a('number');",
+                  "});",
+                  "",
+                  "// 토큰 자동 저장",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set(\"accessToken\", jsonData.data.accessToken);",
+                  "    pm.collectionVariables.set(\"refreshToken\", jsonData.data.refreshToken);",
+                  "    console.log(\"토큰이 자동 저장되었습니다.\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "로그인 API - 성공 시 토큰이 자동으로 저장됩니다.\n\n**에러 코드:**\n- USER_NOT_FOUND: 존재하지 않는 사용자\n- INVALID_PASSWORD: 비밀번호 불일치"
+          },
+          "response": []
+        },
+        {
+          "name": "토큰 재발급",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has success true\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "});",
+                  "",
+                  "// 새 토큰 자동 저장 (RTR)",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set(\"accessToken\", jsonData.data.accessToken);",
+                  "    pm.collectionVariables.set(\"refreshToken\", jsonData.data.refreshToken);",
+                  "    console.log(\"새 토큰이 자동 저장되었습니다 (RTR).\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reissue",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "reissue"]
+            },
+            "description": "토큰 재발급 API (RTR: Refresh Token Rotation)\n\n성공 시 새로운 Access Token과 Refresh Token이 모두 발급됩니다.\n\n**에러 코드:**\n- INVALID_TOKEN: 유효하지 않은 Refresh Token"
+          },
+          "response": []
+        },
+        {
+          "name": "로그아웃",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "",
+                  "// 토큰 초기화",
+                  "if (pm.response.code === 204) {",
+                  "    pm.collectionVariables.set(\"accessToken\", \"\");",
+                  "    pm.collectionVariables.set(\"refreshToken\", \"\");",
+                  "    console.log(\"토큰이 초기화되었습니다.\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "로그아웃 API\n\n**인증 필요**: Bearer Token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Habit (습관 정의)",
+      "description": "시스템 습관 조회 및 커스텀 습관 CRUD",
+      "item": [
+        {
+          "name": "습관 목록 조회 (전체)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has habits array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.habits).to.be.an('array');",
+                  "    pm.expect(jsonData.data.totalCount).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/habits",
+              "host": ["{{baseUrl}}"],
+              "path": ["habits"]
+            },
+            "description": "습관 목록 조회 API\n\n**인증 필요**: Bearer Token\n\n**Query Parameters:**\n- type (선택): system(시스템), custom(내 커스텀)"
+          },
+          "response": []
+        },
+        {
+          "name": "습관 목록 조회 (시스템만)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/habits?type=system",
+              "host": ["{{baseUrl}}"],
+              "path": ["habits"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "system"
+                }
+              ]
+            },
+            "description": "시스템 습관만 조회"
+          },
+          "response": []
+        },
+        {
+          "name": "습관 목록 조회 (커스텀만)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/habits?type=custom",
+              "host": ["{{baseUrl}}"],
+              "path": ["habits"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "custom"
+                }
+              ]
+            },
+            "description": "내 커스텀 습관만 조회"
+          },
+          "response": []
+        },
+        {
+          "name": "커스텀 습관 생성",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has habit data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.id).to.be.a('number');",
+                  "    pm.expect(jsonData.data.isSystem).to.eql(false);",
+                  "});",
+                  "",
+                  "// 생성된 습관 ID 저장",
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set(\"habitId\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"독서하기\",\n  \"description\": \"매일 30분 책 읽기\",\n  \"icon\": \"📚\",\n  \"type\": \"PRACTICE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/habits",
+              "host": ["{{baseUrl}}"],
+              "path": ["habits"]
+            },
+            "description": "커스텀 습관 생성 API\n\n**인증 필요**: Bearer Token\n\n**type:**\n- PRACTICE: 실천형 습관\n- ABSTINENCE: 금지형 습관"
+          },
+          "response": []
+        },
+        {
+          "name": "커스텀 습관 수정",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Habit is updated\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.name).to.eql(\"아침 독서\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"아침 독서\",\n  \"description\": \"기상 후 30분 책 읽기\",\n  \"icon\": \"📖\",\n  \"type\": \"PRACTICE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/habits/{{habitId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["habits", "{{habitId}}"]
+            },
+            "description": "커스텀 습관 수정 API (본인 것만)\n\n**인증 필요**: Bearer Token\n\n**에러 코드:**\n- HABIT_NOT_FOUND: 존재하지 않는 습관\n- HABIT_NOT_OWNED: 본인 습관이 아님\n- SYSTEM_HABIT_NOT_MODIFIABLE: 시스템 습관은 수정 불가"
+          },
+          "response": []
+        },
+        {
+          "name": "커스텀 습관 삭제",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/habits/{{habitId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["habits", "{{habitId}}"]
+            },
+            "description": "커스텀 습관 삭제 API (본인 것만)\n\n**인증 필요**: Bearer Token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. UserHabit (내 습관)",
+      "description": "내 습관 등록/관리 API",
+      "item": [
+        {
+          "name": "내 습관 목록 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has userHabits array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.userHabits).to.be.an('array');",
+                  "    pm.expect(jsonData.data.totalCount).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user-habits",
+              "host": ["{{baseUrl}}"],
+              "path": ["user-habits"]
+            },
+            "description": "내 습관 목록 조회 API\n\n**인증 필요**: Bearer Token"
+          },
+          "response": []
+        },
+        {
+          "name": "내 습관 상세 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has habit details\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.id).to.be.a('number');",
+                  "    pm.expect(jsonData.data.habit).to.be.an('object');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user-habits/{{userHabitId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["user-habits", "{{userHabitId}}"]
+            },
+            "description": "내 습관 상세 조회 API\n\n**인증 필요**: Bearer Token\n\n**에러 코드:**\n- USER_HABIT_NOT_FOUND: 등록된 습관 없음\n- ACCESS_DENIED: 본인 습관이 아님"
+          },
+          "response": []
+        },
+        {
+          "name": "습관 등록",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has userHabit data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.id).to.be.a('number');",
+                  "    pm.expect(jsonData.data.currentStreak).to.eql(0);",
+                  "});",
+                  "",
+                  "// 등록된 userHabit ID 저장",
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set(\"userHabitId\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"habitId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user-habits",
+              "host": ["{{baseUrl}}"],
+              "path": ["user-habits"]
+            },
+            "description": "습관 등록 API\n\n**인증 필요**: Bearer Token\n\n**에러 코드:**\n- HABIT_NOT_FOUND: 존재하지 않는 습관\n- DUPLICATE_USER_HABIT: 이미 등록된 습관\n- HABIT_NOT_OWNED: 타인의 커스텀 습관"
+          },
+          "response": []
+        },
+        {
+          "name": "습관 해제",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user-habits/{{userHabitId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["user-habits", "{{userHabitId}}"]
+            },
+            "description": "습관 해제 API (관련 기록도 삭제됨)\n\n**인증 필요**: Bearer Token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. HabitLog (습관 체크)",
+      "description": "습관 체크 기록 API",
+      "item": [
+        {
+          "name": "날짜별 습관 현황 조회 (오늘)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has logs array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.date).to.be.a('string');",
+                  "    pm.expect(jsonData.data.logs).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/habit-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["habit-logs"]
+            },
+            "description": "날짜별 습관 현황 조회 (기본: 오늘)\n\n**인증 필요**: Bearer Token"
+          },
+          "response": []
+        },
+        {
+          "name": "날짜별 습관 현황 조회 (특정일)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/habit-logs?date=2025-01-30",
+              "host": ["{{baseUrl}}"],
+              "path": ["habit-logs"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2025-01-30"
+                }
+              ]
+            },
+            "description": "특정 날짜의 습관 현황 조회\n\n**인증 필요**: Bearer Token"
+          },
+          "response": []
+        },
+        {
+          "name": "습관 체크",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has log data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.id).to.be.a('number');",
+                  "    pm.expect(jsonData.data.checked).to.eql(true);",
+                  "});",
+                  "",
+                  "// 생성된 log ID 저장",
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set(\"habitLogId\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userHabitId\": {{userHabitId}},\n  \"date\": \"2025-01-30\",\n  \"checked\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/habit-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["habit-logs"]
+            },
+            "description": "습관 체크 API\n\ndate 생략 시 오늘 날짜\n\n**인증 필요**: Bearer Token\n\n**에러 코드:**\n- USER_HABIT_NOT_FOUND: 등록된 습관 없음\n- DUPLICATE_HABIT_LOG: 해당 날짜에 이미 체크됨"
+          },
+          "response": []
+        },
+        {
+          "name": "습관 체크 (오늘)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userHabitId\": {{userHabitId}},\n  \"checked\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/habit-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["habit-logs"]
+            },
+            "description": "습관 체크 API (오늘 날짜)\n\n**인증 필요**: Bearer Token"
+          },
+          "response": []
+        },
+        {
+          "name": "습관 체크 취소",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/habit-logs/{{habitLogId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["habit-logs", "{{habitLogId}}"]
+            },
+            "description": "습관 체크 취소 API (스트릭 재계산됨)\n\n**인증 필요**: Bearer Token\n\n**에러 코드:**\n- HABIT_LOG_NOT_FOUND: 존재하지 않는 기록\n- ACCESS_DENIED: 본인 기록이 아님"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. DailyPage (오늘한장)",
+      "description": "일기/페이지 작성 API",
+      "item": [
+        {
+          "name": "날짜별 페이지 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has page data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.id).to.be.a('number');",
+                  "    pm.expect(jsonData.data.date).to.be.a('string');",
+                  "    pm.expect(jsonData.data.content).to.be.a('string');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/daily-pages?date=2025-01-30",
+              "host": ["{{baseUrl}}"],
+              "path": ["daily-pages"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2025-01-30"
+                }
+              ]
+            },
+            "description": "날짜별 페이지 조회 API\n\n**인증 필요**: Bearer Token\n\n**에러 코드:**\n- PAGE_NOT_FOUND: 해당 날짜에 페이지 없음"
+          },
+          "response": []
+        },
+        {
+          "name": "페이지 작성",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has page data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.id).to.be.a('number');",
+                  "    pm.expect(jsonData.data.content).to.be.a('string');",
+                  "});",
+                  "",
+                  "// 생성된 page ID 저장",
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set(\"dailyPageId\", jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"오늘 하루도 열심히 살았다. 아침에 달리기를 하고 저녁에는 독서를 했다.\",\n  \"date\": \"2025-01-30\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/daily-pages",
+              "host": ["{{baseUrl}}"],
+              "path": ["daily-pages"]
+            },
+            "description": "페이지 작성 API\n\ndate 생략 시 오늘 날짜\n\n**인증 필요**: Bearer Token\n\n**에러 코드:**\n- DUPLICATE_PAGE: 해당 날짜에 이미 페이지 존재"
+          },
+          "response": []
+        },
+        {
+          "name": "페이지 작성 (오늘)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"오늘 하루도 열심히 살았다.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/daily-pages",
+              "host": ["{{baseUrl}}"],
+              "path": ["daily-pages"]
+            },
+            "description": "페이지 작성 API (오늘 날짜)\n\n**인증 필요**: Bearer Token"
+          },
+          "response": []
+        },
+        {
+          "name": "페이지 수정",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Content is updated\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.content).to.include(\"수정된\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"수정된 내용입니다. 오늘은 정말 뜻깊은 하루였다.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/daily-pages/{{dailyPageId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["daily-pages", "{{dailyPageId}}"]
+            },
+            "description": "페이지 수정 API\n\n**인증 필요**: Bearer Token"
+          },
+          "response": []
+        },
+        {
+          "name": "페이지 삭제",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/daily-pages/{{dailyPageId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["daily-pages", "{{dailyPageId}}"]
+            },
+            "description": "페이지 삭제 API\n\n**인증 필요**: Bearer Token"
+          },
+          "response": []
+        },
+        {
+          "name": "월별 캘린더 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has calendar data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.year).to.be.a('number');",
+                  "    pm.expect(jsonData.data.month).to.be.a('number');",
+                  "    pm.expect(jsonData.data.days).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/daily-pages/calendar?year=2025&month=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["daily-pages", "calendar"],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2025"
+                },
+                {
+                  "key": "month",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "월별 캘린더 조회 API\n\n**인증 필요**: Bearer Token\n\n**Query Parameters:**\n- year (필수): 연도\n- month (필수): 월"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Badge (뱃지)",
+      "description": "뱃지 시스템 API",
+      "item": [
+        {
+          "name": "전체 뱃지 세트 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has badgeSets\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.badgeSets).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/badges",
+              "host": ["{{baseUrl}}"],
+              "path": ["badges"]
+            },
+            "description": "전체 뱃지 세트 조회 API\n\n**인증 필요**: Bearer Token"
+          },
+          "response": []
+        },
+        {
+          "name": "내 뱃지 현황",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has badge status\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.acquired).to.be.an('array');",
+                  "    pm.expect(jsonData.data.inProgress).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/badges/my",
+              "host": ["{{baseUrl}}"],
+              "path": ["badges", "my"]
+            },
+            "description": "내 뱃지 현황 (획득 + 진행 중) 조회 API\n\n**인증 필요**: Bearer Token"
+          },
+          "response": []
+        },
+        {
+          "name": "최근 획득 뱃지",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has badges array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/badges/recent?limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["badges", "recent"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "최근 획득 뱃지 조회 API\n\n**인증 필요**: Bearer Token\n\n**Query Parameters:**\n- limit (선택): 조회 개수 (기본값: 5)"
+          },
+          "response": []
+        },
+        {
+          "name": "시스템 뱃지세트 목록",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has badgeSets array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/badges/sets",
+              "host": ["{{baseUrl}}"],
+              "path": ["badges", "sets"]
+            },
+            "description": "시스템 뱃지세트 목록 조회 API\n\n범용으로 사용 가능한 뱃지세트 목록을 조회합니다.\n\n**인증 필요**: Bearer Token"
+          },
+          "response": []
+        },
+        {
+          "name": "습관별 뱃지세트 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has badgeSets array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/badges/sets/habit/{{habitId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["badges", "sets", "habit", "{{habitId}}"]
+            },
+            "description": "습관별 적용 가능 뱃지세트 조회 API\n\n특정 습관에 적용 가능한 뱃지세트 목록을 조회합니다.\n\n**인증 필요**: Bearer Token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. AiFeedback (AI 피드백)",
+      "description": "AI 피드백 API",
+      "item": [
+        {
+          "name": "오늘의 피드백 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has feedback data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.id).to.be.a('number');",
+                  "    pm.expect(jsonData.data.message).to.be.a('string');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ai-feedback/today",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai-feedback", "today"]
+            },
+            "description": "오늘의 피드백 조회 API (없으면 자동 생성)\n\n**인증 필요**: Bearer Token\n\n**에러 코드:**\n- NO_DATA_FOR_FEEDBACK: 어제 데이터가 없어 피드백 생성 불가"
+          },
+          "response": []
+        },
+        {
+          "name": "특정 날짜 피드백 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has feedback data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.id).to.be.a('number');",
+                  "    pm.expect(jsonData.data.message).to.be.a('string');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ai-feedback?date=2025-01-30",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai-feedback"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2025-01-30"
+                }
+              ]
+            },
+            "description": "특정 날짜 피드백 조회 API\n\n**인증 필요**: Bearer Token\n\n**에러 코드:**\n- FEEDBACK_NOT_FOUND: 해당 날짜에 피드백 없음"
+          },
+          "response": []
+        },
+        {
+          "name": "월별 피드백 히스토리",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has history data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.year).to.be.a('number');",
+                  "    pm.expect(jsonData.data.month).to.be.a('number');",
+                  "    pm.expect(jsonData.data.feedbacks).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ai-feedback/history?year=2025&month=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai-feedback", "history"],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2025"
+                },
+                {
+                  "key": "month",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "월별 피드백 히스토리 조회 API\n\n**인증 필요**: Bearer Token\n\n**Query Parameters:**\n- year (필수): 연도\n- month (필수): 월"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

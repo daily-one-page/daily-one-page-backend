@@ -1,6 +1,7 @@
 package com.dailyonepage.backend.domain.habit.controller;
 
 import com.dailyonepage.backend.domain.habit.dto.UserHabitCreateRequest;
+import com.dailyonepage.backend.domain.habit.dto.UserHabitDetailResponse;
 import com.dailyonepage.backend.domain.habit.dto.UserHabitListResponse;
 import com.dailyonepage.backend.domain.habit.dto.UserHabitResponse;
 import com.dailyonepage.backend.domain.habit.service.UserHabitService;
@@ -42,6 +43,22 @@ public class UserHabitController {
     public ResponseEntity<ApiResponse<UserHabitListResponse>> getMyHabits() {
         Long userId = getCurrentUserId();
         UserHabitListResponse response = userHabitService.getMyHabits(userId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * 내 습관 상세 조회
+     * GET /api/user-habits/{id}
+     */
+    @Operation(summary = "내 습관 상세 조회", description = "등록된 습관의 상세 정보를 조회합니다.")
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<UserHabitDetailResponse>> getMyHabitDetail(
+            @Parameter(description = "사용자 습관 ID", example = "1")
+            @PathVariable Long id) {
+
+        Long userId = getCurrentUserId();
+        UserHabitDetailResponse response = userHabitService.getMyHabitDetail(userId, id);
+
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

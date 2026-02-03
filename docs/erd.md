@@ -399,7 +399,9 @@ Table Habit {
   id bigint [pk, increment]
   user_id bigint [null, ref: > User.id, note: 'null이면 시스템']
   name varchar(100) [not null]
-  type varchar(20) [not null, note: 'PRACTICE | ABSTINENCE']
+  description varchar(500) [null]
+  icon varchar(10) [null, note: '이모지']
+  type enum [not null, note: 'PRACTICE | ABSTINENCE']
   created_at datetime [not null]
 }
 
@@ -556,6 +558,6 @@ PageBlock (새로 추가)
 
 ---
 
-**문서 작성일:** 2025년 1월 25일  
-**최종 수정일:** 2025년 1월 27일  
+**문서 작성일:** 2025년 1월 25일
+**최종 수정일:** 2025년 2월 3일
 **작성자:** 정우찬

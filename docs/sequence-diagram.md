@@ -18,7 +18,7 @@ participant Server
 database MySQL
 
 User -> Client: 회원가입 정보 입력\n(email, password, nickname)
-Client -> Server: POST /auth/signup
+Client -> Server: POST /api/auth/signup
 Server -> MySQL: 이메일 중복 확인
 MySQL --> Server: 결과
 
@@ -47,7 +47,7 @@ database MySQL
 database Redis
 
 User -> Client: 로그인 정보 입력\n(email, password)
-Client -> Server: POST /auth/login
+Client -> Server: POST /api/auth/login
 Server -> MySQL: 이메일로 User 조회
 MySQL --> Server: User 정보
 
@@ -83,7 +83,7 @@ participant Client
 participant Server
 database Redis
 
-Client -> Server: POST /auth/refresh\n{refreshToken}
+Client -> Server: POST /api/auth/reissue\n{refreshToken}
 Server -> Server: Refresh Token 검증 (서명, 만료)
 
 alt 토큰 유효하지 않음
@@ -121,7 +121,7 @@ participant Server
 database Redis
 
 User -> Client: 로그아웃 버튼 클릭
-Client -> Server: POST /auth/logout\n{refreshToken}
+Client -> Server: POST /api/auth/logout\n{refreshToken}
 Server -> Server: Access Token에서 userId 추출
 Server -> Redis: Refresh Token 삭제\n(KEY: userId)
 Redis --> Server: 삭제 완료
@@ -146,7 +146,7 @@ participant Server
 database MySQL
 
 User -> Client: 습관 추가 화면 진입
-Client -> Server: GET /habits?type=system\n[Authorization: Bearer token]
+Client -> Server: GET /api/habits?type=system\n[Authorization: Bearer token]
 Server -> MySQL: 시스템 습관 조회\n(user_id IS NULL)
 MySQL --> Server: 습관 목록
 
@@ -171,7 +171,7 @@ participant Server
 database MySQL
 
 User -> Client: 커스텀 습관 입력\n(name, type)
-Client -> Server: POST /habits\n{name, type}
+Client -> Server: POST /api/habits\n{name, type}
 Server -> MySQL: Habit INSERT\n(user_id = 현재유저)
 MySQL --> Server: 저장 완료
 Server --> Client: 201 Created\n{id, name, type, userId}
@@ -190,7 +190,7 @@ participant Server
 database MySQL
 
 User -> Client: 습관 수정 입력\n(name, type)
-Client -> Server: PUT /habits/{id}\n{name, type}
+Client -> Server: PUT /api/habits/{id}\n{name, type}
 Server -> MySQL: Habit 조회
 MySQL --> Server: Habit 정보
 
@@ -218,7 +218,7 @@ database MySQL
 database Redis
 
 User -> Client: 습관 삭제 확인
-Client -> Server: DELETE /habits/{id}
+Client -> Server: DELETE /api/habits/{id}
 Server -> MySQL: Habit 조회
 MySQL --> Server: Habit 정보
 
@@ -256,7 +256,7 @@ participant Server
 database MySQL
 
 User -> Client: 시스템 습관 선택
-Client -> Server: POST /user-habits\n{habitId}
+Client -> Server: POST /api/user-habits\n{habitId}
 Server -> MySQL: Habit 조회
 MySQL --> Server: Habit 정보 (시스템 습관)
 
@@ -301,7 +301,7 @@ participant Server
 database MySQL
 
 User -> Client: 커스텀 습관 선택
-Client -> Server: POST /user-habits\n{habitId}
+Client -> Server: POST /api/user-habits\n{habitId}
 Server -> MySQL: Habit 조회
 MySQL --> Server: Habit 정보 (커스텀 습관)
 
@@ -341,7 +341,7 @@ database MySQL
 database Redis
 
 User -> Client: 습관 목록 화면 진입
-Client -> Server: GET /user-habits
+Client -> Server: GET /api/user-habits
 Server -> MySQL: UserHabit 목록 조회\n(user_id = 현재유저)
 MySQL --> Server: UserHabit 목록
 
@@ -375,7 +375,7 @@ database MySQL
 database Redis
 
 User -> Client: 습관 상세 화면 진입
-Client -> Server: GET /user-habits/{id}
+Client -> Server: GET /api/user-habits/{id}
 Server -> MySQL: UserHabit 조회
 MySQL --> Server: UserHabit 정보
 
@@ -416,7 +416,7 @@ database MySQL
 database Redis
 
 User -> Client: 내 습관 삭제 확인
-Client -> Server: DELETE /user-habits/{id}
+Client -> Server: DELETE /api/user-habits/{id}
 Server -> MySQL: UserHabit 조회
 MySQL --> Server: UserHabit 정보
 
@@ -454,7 +454,7 @@ database MySQL
 database Redis
 
 User -> Client: 습관 체크 버튼 클릭
-Client -> Server: POST /user-habits/{id}/logs\n{date: "2025-01-27"}
+Client -> Server: POST /api/habit-logs\n{userHabitId, date: "2025-01-27", checked: true}
 Server -> Server: 날짜 검증 (3일 이내)
 
 alt 3일 초과
@@ -538,7 +538,7 @@ database MySQL
 database Redis
 
 User -> Client: 과거 날짜 체크
-Client -> Server: POST /user-habits/{id}/logs\n{date: "2025-01-25"}
+Client -> Server: POST /api/habit-logs\n{userHabitId, date: "2025-01-25", checked: true}
 Server -> Server: 날짜 검증 (3일 이내)
 
 alt 3일 초과
@@ -592,7 +592,7 @@ database MySQL
 database Redis
 
 User -> Client: 체크 취소 버튼 클릭
-Client -> Server: DELETE /user-habits/{id}/logs/{date}
+Client -> Server: DELETE /api/habit-logs/{logId}
 Server -> Server: 날짜 검증 (3일 이내)
 
 alt 3일 초과
@@ -642,7 +642,7 @@ participant Server
 database MySQL
 
 User -> Client: 캘린더에서 날짜 선택
-Client -> Server: GET /habit-logs?date=2025-01-27
+Client -> Server: GET /api/habit-logs?date=2025-01-27
 Server -> MySQL: 해당 유저의 모든 UserHabit 조회
 MySQL --> Server: UserHabit 목록
 
@@ -661,36 +661,61 @@ Client --> User: 해당 날짜 습관 현황 표시
 
 ## 5. DailyPage
 
-### 5.1 페이지 작성/수정 (Upsert)
+### 5.1 페이지 작성
 
 ```plantuml
-@startuml 페이지 작성 수정
+@startuml 페이지 작성
 actor User
 participant Client
 participant Server
 database MySQL
 
 User -> Client: 페이지 내용 작성
-Client -> Server: PUT /daily-pages/{date}\n{content}
-Server -> MySQL: DailyPage 조회\n(user_id, date)
-MySQL --> Server: 기존 페이지 (있으면)
+Client -> Server: POST /api/daily-pages\n{content, date}
+Server -> MySQL: DailyPage 중복 확인\n(user_id, date)
+MySQL --> Server: 기존 페이지 여부
 
-alt 기존 페이지 없음 (INSERT)
+alt 해당 날짜에 페이지 존재
+    Server --> Client: 409 Conflict\nDUPLICATE_PAGE
+    Client --> User: 에러 표시
+else 페이지 없음
     Server -> MySQL: DailyPage INSERT
     MySQL --> Server: 저장 완료
     Server --> Client: 201 Created\n{id, date, content, createdAt, updatedAt}
-else 기존 페이지 있음 (UPDATE)
-    Server -> MySQL: DailyPage UPDATE\n(content, updated_at)
-    MySQL --> Server: 수정 완료
-    Server --> Client: 200 OK\n{id, date, content, createdAt, updatedAt}
+    Client --> User: 저장 완료 표시
 end
-
-Client --> User: 저장 완료 표시
 
 @enduml
 ```
 
-### 5.2 페이지 조회
+### 5.2 페이지 수정
+
+```plantuml
+@startuml 페이지 수정
+actor User
+participant Client
+participant Server
+database MySQL
+
+User -> Client: 페이지 내용 수정
+Client -> Server: PUT /api/daily-pages/{id}\n{content}
+Server -> MySQL: DailyPage 조회\n(id, user_id 검증)
+MySQL --> Server: DailyPage 정보
+
+alt 페이지 없음 또는 본인 것 아님
+    Server --> Client: 403/404 Error
+    Client --> User: 에러 표시
+else 본인 페이지
+    Server -> MySQL: DailyPage UPDATE\n(content, updated_at)
+    MySQL --> Server: 수정 완료
+    Server --> Client: 200 OK\n{id, date, content, createdAt, updatedAt}
+    Client --> User: 수정 완료 표시
+end
+
+@enduml
+```
+
+### 5.3 페이지 조회
 
 ```plantuml
 @startuml 페이지 조회
@@ -700,12 +725,12 @@ participant Server
 database MySQL
 
 User -> Client: 특정 날짜 페이지 열람
-Client -> Server: GET /daily-pages/{date}
+Client -> Server: GET /api/daily-pages?date=2025-01-27
 Server -> MySQL: DailyPage 조회\n(user_id, date)
 MySQL --> Server: DailyPage 정보
 
 alt 페이지 없음
-    Server --> Client: 404 Not Found
+    Server --> Client: 404 Not Found\nPAGE_NOT_FOUND
     Client --> User: 빈 페이지 표시 (작성 유도)
 else 페이지 있음
     Server --> Client: 200 OK\n{id, date, content, createdAt, updatedAt}
@@ -715,7 +740,7 @@ end
 @enduml
 ```
 
-### 5.3 페이지 삭제
+### 5.4 페이지 삭제
 
 ```plantuml
 @startuml 페이지 삭제
@@ -725,14 +750,14 @@ participant Server
 database MySQL
 
 User -> Client: 페이지 삭제 확인
-Client -> Server: DELETE /daily-pages/{date}
-Server -> MySQL: DailyPage 조회
+Client -> Server: DELETE /api/daily-pages/{id}
+Server -> MySQL: DailyPage 조회\n(id, user_id 검증)
 MySQL --> Server: DailyPage 정보
 
-alt 페이지 없음
-    Server --> Client: 404 Not Found
+alt 페이지 없음 또는 본인 것 아님
+    Server --> Client: 403/404 Error
     Client --> User: 에러 표시
-else 페이지 있음
+else 본인 페이지
     Server -> MySQL: DailyPage DELETE
     MySQL --> Server: 삭제 완료
     Server --> Client: 204 No Content
@@ -742,23 +767,23 @@ end
 @enduml
 ```
 
-### 5.4 월별 작성 여부 조회
+### 5.5 월별 캘린더 조회
 
 ```plantuml
-@startuml 월별 작성 여부 조회
+@startuml 월별 캘린더 조회
 actor User
 participant Client
 participant Server
 database MySQL
 
 User -> Client: 캘린더 화면 진입\n(2025년 1월)
-Client -> Server: GET /daily-pages?year=2025&month=1
+Client -> Server: GET /api/daily-pages/calendar?year=2025&month=1
 Server -> MySQL: 해당 월의 DailyPage 조회\n(user_id, date BETWEEN 1/1 AND 1/31)
 MySQL --> Server: DailyPage 목록
 
-Server -> Server: 각 날짜별 hasContent 매핑
+Server -> Server: 각 날짜별 hasContent, preview 매핑
 
-Server --> Client: 200 OK\n{year, month, days: [{date, hasContent}]}
+Server --> Client: 200 OK\n{year, month, days: [{date, hasContent, preview}]}
 Client --> User: 캘린더에 작성 여부 표시\n(● 작성함 / ○ 미작성)
 
 @enduml
@@ -768,74 +793,73 @@ Client --> User: 캘린더에 작성 여부 표시\n(● 작성함 / ○ 미작�
 
 ## 6. Badge
 
-### 6.1 특정 습관 뱃지 진행 현황 조회
+### 6.1 전체 뱃지세트 조회
 
 ```plantuml
-@startuml 특정 습관 뱃지 조회
+@startuml 전체 뱃지세트 조회
 actor User
 participant Client
 participant Server
 database MySQL
 
-User -> Client: 습관 상세에서 뱃지 탭 선택
-Client -> Server: GET /user-habits/{id}/badge-sets
-Server -> MySQL: UserBadgeSet 목록 조회\n(user_habit_id = id)
-MySQL --> Server: UserBadgeSet 목록
+User -> Client: 뱃지 목록 화면 진입
+Client -> Server: GET /api/badges
+Server -> MySQL: 모든 BadgeSet 조회
+MySQL --> Server: BadgeSet 목록
 
-loop 각 UserBadgeSet별
-    Server -> MySQL: BadgeSet 정보 조회
-    Server -> MySQL: current_badge 정보 조회
-    Server -> MySQL: next_badge 조회\n(sequence = current + 1)
-    MySQL --> Server: 뱃지 정보
-    Server -> Server: progress 계산\n(current_value / condition_value * 100)
+loop 각 BadgeSet별
+    Server -> MySQL: Badge 목록 조회\n(badge_set_id)
+    MySQL --> Server: Badge 목록
 end
 
-Server --> Client: 200 OK\n{badgeSets: [{badgeSetName, currentBadge, currentValue, progress, nextBadge}]}
-Client --> User: 뱃지 진행 상황 표시
+Server --> Client: 200 OK\n{badgeSets: [{id, name, description, badges: [...]}]}
+Client --> User: 전체 뱃지세트 표시
 
 @enduml
 ```
 
-### 6.2 전체 뱃지세트 진행 현황 조회
+### 6.2 내 뱃지 현황 조회
 
 ```plantuml
-@startuml 전체 뱃지 진행 조회
+@startuml 내 뱃지 현황 조회
 actor User
 participant Client
 participant Server
 database MySQL
 
-User -> Client: 뱃지 현황 화면 진입
-Client -> Server: GET /user-badge-sets
-Server -> MySQL: 모든 UserBadgeSet 조회\n(user_id = 현재유저)
-MySQL --> Server: UserBadgeSet 목록
-
-loop 각 UserBadgeSet별
-    Server -> MySQL: UserHabit → Habit 정보 조회 (habitName)
-    Server -> MySQL: BadgeSet 정보 조회 (badgeSetName)
-    Server -> MySQL: current_badge 정보 조회
-    MySQL --> Server: 관련 정보
-    Server -> Server: progress 계산
-end
-
-Server --> Client: 200 OK\n{badgeSets: [{habitName, badgeSetName, currentBadge, currentValue, progress}]}
-Client --> User: 전체 뱃지 진행 표시
-
-@enduml
-```
-
-### 6.3 획득한 뱃지 목록 조회
-
-```plantuml
-@startuml 획득 뱃지 조회
-actor User
-participant Client
-participant Server
-database MySQL
-
-User -> Client: 획득 뱃지 화면 진입
-Client -> Server: GET /user-badges
+User -> Client: 내 뱃지 화면 진입
+Client -> Server: GET /api/badges/my
 Server -> MySQL: UserBadge 목록 조회\n(user_id = 현재유저)
+MySQL --> Server: 획득한 뱃지 목록
+
+Server -> MySQL: UserBadgeSet 목록 조회\n(user_id = 현재유저)
+MySQL --> Server: 진행 중인 뱃지세트 목록
+
+loop 각 UserBadgeSet별
+    Server -> MySQL: BadgeSet, current_badge 정보 조회
+    Server -> MySQL: UserHabit → Habit 정보 조회 (habitName)
+    MySQL --> Server: 관련 정보
+    Server -> Server: progress 계산\n(currentValue / conditionValue * 100)
+end
+
+Server --> Client: 200 OK\n{acquired: [...], inProgress: [...]}
+Client --> User: 획득 뱃지 + 진행 현황 표시
+
+@enduml
+```
+
+### 6.3 최근 획득 뱃지 조회
+
+```plantuml
+@startuml 최근 획득 뱃지 조회
+actor User
+participant Client
+participant Server
+database MySQL
+
+User -> Client: 최근 뱃지 확인
+Client -> Server: GET /api/badges/recent?limit=5
+Server -> MySQL: UserBadge 최근 조회\n(user_id, ORDER BY completed_at DESC, LIMIT 5)
 MySQL --> Server: UserBadge 목록
 
 loop 각 UserBadge별
@@ -844,8 +868,8 @@ loop 각 UserBadge별
     MySQL --> Server: 관련 정보
 end
 
-Server --> Client: 200 OK\n{badges: [{badgeName, badgeIcon, habitName, completedAt}]}
-Client --> User: 획득 뱃지 목록 표시
+Server --> Client: 200 OK\n[{badgeName, badgeIcon, habitName, acquiredAt}]
+Client --> User: 최근 획득 뱃지 표시
 
 @enduml
 ```
@@ -865,7 +889,7 @@ database MySQL
 participant OpenAI
 
 User -> Client: 앱 실행 (오늘 첫 접속)
-Client -> Server: GET /ai-feedback/today
+Client -> Server: GET /api/ai-feedback/today
 Server -> MySQL: 오늘 AiFeedback 조회\n(user_id, date = today)
 MySQL --> Server: AiFeedback (있으면)
 
@@ -909,7 +933,7 @@ participant Server
 database MySQL
 
 User -> Client: 캘린더에서 과거 날짜 선택
-Client -> Server: GET /ai-feedback/{date}
+Client -> Server: GET /api/ai-feedback?date=2025-01-25
 Server -> MySQL: AiFeedback 조회\n(user_id, date)
 MySQL --> Server: AiFeedback 정보
 
@@ -941,17 +965,17 @@ database MySQL
 User -> Client: Select January 25th from Calendar
 == Parallel API Calls ==
 par Habit Status
-    Client -> Server: GET /habit-logs?date=2025-01-25
+    Client -> Server: GET /api/habit-logs?date=2025-01-25
     Server -> MySQL: Query HabitLog
     MySQL --> Server: Habit Status
     Server --> Client: {logs: [...]}
 else Daily Pages
-    Client -> Server: GET /daily-pages/2025-01-25
+    Client -> Server: GET /api/daily-pages?date=2025-01-25
     Server -> MySQL: Query DailyPage
     MySQL --> Server: Page Content
     Server --> Client: {content: "..."}
 else AI Feedback
-    Client -> Server: GET /ai-feedback/2025-01-25
+    Client -> Server: GET /api/ai-feedback?date=2025-01-25
     Server -> MySQL: Query AiFeedback
     MySQL --> Server: Feedback
     Server --> Client: {message: "..."}
@@ -978,13 +1002,13 @@ User -> Client: 저녁에 앱 접속
 == 습관 체크 ==
 loop 각 습관별
     User -> Client: 습관 체크
-    Client -> Server: POST /user-habits/{id}/logs
+    Client -> Server: POST /api/habit-logs\n{userHabitId, checked: true}
     Server -> MySQL: HabitLog 저장
     Server -> MySQL: 스트릭 업데이트
     Server -> MySQL: 뱃지 진행 업데이트
     Server -> Redis: 캐시 갱신
     Server --> Client: 체크 완료
-    
+
     alt 뱃지 달성
         Client --> User: 🎉 뱃지 획득 알림!
     end
@@ -992,14 +1016,14 @@ end
 
 == 데일리 페이지 작성 ==
 User -> Client: 오늘 페이지 작성
-Client -> Server: PUT /daily-pages/{date}
+Client -> Server: POST /api/daily-pages\n{content}
 Server -> MySQL: DailyPage 저장
 Server --> Client: 저장 완료
 Client --> User: 오늘 기록 완료!
 
 == 다음날 아침 ==
 User -> Client: 앱 접속
-Client -> Server: GET /ai-feedback/today
+Client -> Server: GET /api/ai-feedback/today
 Server -> MySQL: 어제 기록 기반 피드백 생성
 Server --> Client: 피드백
 Client --> User: "어제 3개 습관 모두 성공! 대단해요 💪"
@@ -1014,5 +1038,6 @@ Client --> User: "어제 3개 습관 모두 성공! 대단해요 💪"
 | 항목 | 내용 |
 |------|------|
 | 작성일 | 2025년 1월 27일 |
+| 최종 수정일 | 2025년 2월 3일 |
 | 작성자 | 정우찬 |
-| 관련 문서 | ERD 설계문서, API 명세서 |
+| 관련 문서 | ERD 설계문서, API 명세서 v2 |

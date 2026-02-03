@@ -9,6 +9,10 @@ import java.util.List;
 
 public interface BadgeSetRepository extends JpaRepository<BadgeSet, Long> {
 
+    // 전체 뱃지세트 조회 (뱃지 포함)
+    @Query("SELECT DISTINCT bs FROM BadgeSet bs LEFT JOIN FETCH bs.badges")
+    List<BadgeSet> findAllWithBadges();
+
     // 범용 뱃지세트 조회 (모든 습관에 적용)
     @Query("SELECT bs FROM BadgeSet bs WHERE bs.user IS NULL AND bs.habit IS NULL")
     List<BadgeSet> findUniversalBadgeSets();

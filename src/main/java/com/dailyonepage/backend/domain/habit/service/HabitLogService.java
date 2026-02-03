@@ -75,12 +75,32 @@ public class HabitLogService {
 
     /**
      * 특정 날짜의 습관 기록 조회
+     * 등록된 모든 습관 + 해당 날짜 체크 여부 반환
      */
     public HabitLogListResponse getLogsByDate(Long userId, LocalDate date) {
+        // 1. 사용자가 등록한 모든 습관 조회
+        List<UserHabit> userHabits = userHabitRepository.findByUserIdWithHabit(userId);
+
+        // 2. 해당 날짜의 체크 기록 조회
         List<HabitLog> logs = habitLogRepository.findByUserIdAndDate(userId, date);
 
-        List<HabitLogResponse> responses = logs.stream()
-                .map(HabitLogResponse::from)
+        // 3. 체크 기록을 Map으로 변환 (userHabitId -> HabitLog)
+        java.util.Map<Long, HabitLog> logMap = logs.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        log -> log.getUserHabit().getId(),
+                        log -> log
+                ));
+
+        // 4. 모든 습관에 대해 응답 생성 (체크 여부 포함)
+        List<HabitLogResponse> responses = userHabits.stream()
+                .map(userHabit -> {
+                    HabitLog log = logMap.get(userHabit.getId());
+                    if (log != null) {
+                        return HabitLogResponse.from(log);
+                    } else {
+                        return HabitLogResponse.fromUserHabitUnchecked(userHabit, date);
+                    }
+                })
                 .toList();
 
         return HabitLogListResponse.of(date, responses);

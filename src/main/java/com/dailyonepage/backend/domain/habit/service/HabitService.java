@@ -49,6 +49,19 @@ public class HabitService {
     }
 
     /**
+     * 커스텀 습관 목록 조회 (본인 것만)
+     */
+    public SystemHabitListResponse getCustomHabits(Long userId) {
+        List<Habit> customHabits = habitRepository.findByUserId(userId);
+
+        List<SystemHabitResponse> responses = customHabits.stream()
+                .map(habit -> SystemHabitResponse.of(habit, List.of()))
+                .toList();
+
+        return SystemHabitListResponse.from(responses);
+    }
+
+    /**
      * 커스텀 습관 생성
      */
     @Transactional
@@ -59,6 +72,8 @@ public class HabitService {
         Habit habit = Habit.builder()
                 .user(user)
                 .name(request.getName())
+                .description(request.getDescription())
+                .icon(request.getIcon())
                 .type(request.getType())
                 .build();
 
@@ -86,7 +101,7 @@ public class HabitService {
             throw new BusinessException(ErrorCode.HABIT_NOT_OWNED);
         }
 
-        habit.update(request.getName(), request.getType());
+        habit.update(request.getName(), request.getDescription(), request.getIcon(), request.getType());
         log.info("커스텀 습관 수정: userId={}, habitId={}, name={}", userId, habitId, request.getName());
 
         return HabitResponse.from(habit);

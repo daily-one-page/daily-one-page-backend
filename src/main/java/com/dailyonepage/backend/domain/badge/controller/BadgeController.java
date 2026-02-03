@@ -34,6 +34,17 @@ public class BadgeController {
     private final UserRepository userRepository;
 
     /**
+     * 전체 뱃지세트 조회
+     * GET /api/badges
+     */
+    @Operation(summary = "전체 뱃지세트 목록", description = "모든 뱃지세트 목록을 조회합니다.")
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<BadgeSetResponse>>> getAllBadgeSets() {
+        List<BadgeSetResponse> response = badgeService.getAllBadgeSets();
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
      * 내 뱃지 현황 조회
      * GET /api/badges/my
      */

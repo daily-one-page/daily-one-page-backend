@@ -1,30 +1,61 @@
 # 오늘한장 API 명세서
 
+> **실제 구현 기준** - 프론트엔드 개발 시 이 문서를 참고하세요.
+
 ## 개요
 
-- **Base URL**: `/api/v1`
-- **인증 방식**: JWT (Bearer Token)
-- **날짜 형식**: `YYYY-MM-DD`
-- **시간 형식**: `ISO 8601`
+| 항목 | 값 |
+|------|---|
+| Base URL | `/api` |
+| 인증 방식 | JWT Bearer Token |
+| 날짜 형식 | `YYYY-MM-DD` (예: 2025-01-30) |
+| 시간 형식 | ISO 8601 (예: 2025-01-30T10:00:00) |
+
+## 공통 응답 형식
+
+### 성공 응답
+
+```json
+{
+  "success": true,
+  "data": { ... },
+  "error": null
+}
+```
+
+### 에러 응답
+
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "에러 메시지"
+  }
+}
+```
+
+### 공통 에러 코드
+
+| 코드 | HTTP | 설명 |
+|------|------|------|
+| `INVALID_INPUT` | 400 | 입력값 검증 실패 |
+| `UNAUTHORIZED` | 401 | 인증 필요 |
+| `ACCESS_DENIED` | 403 | 접근 권한 없음 |
+| `INVALID_TOKEN` | 401 | 유효하지 않은 토큰 |
+| `EXPIRED_TOKEN` | 401 | 만료된 토큰 |
+| `INTERNAL_ERROR` | 500 | 서버 내부 오류 |
 
 ---
 
-## 1. Auth
+## 1. Auth API (인증)
 
-인증 관련 API. Refresh Token은 Redis에 저장하며, RTR(Refresh Token Rotation) 방식 적용.
-
-| 기능 | Method | Endpoint | 인증 |
-|------|--------|----------|------|
-| 회원가입 | POST | `/auth/signup` | X |
-| 로그인 | POST | `/auth/login` | X |
-| 토큰 재발급 | POST | `/auth/refresh` | X |
-| 로그아웃 | POST | `/auth/logout` | O |
-
-### POST /auth/signup
+### POST /api/auth/signup
 
 회원가입
 
-**Request Body**
+**Request**
 ```json
 {
   "email": "user@example.com",
@@ -36,17 +67,25 @@
 **Response** `201 Created`
 ```json
 {
-  "userId": 1,
-  "email": "user@example.com",
-  "nickname": "닉네임"
+  "success": true,
+  "data": 1,
+  "error": null
 }
 ```
+> `data`는 생성된 사용자 ID
 
-### POST /auth/login
+**에러**
+| 코드 | 설명 |
+|------|------|
+| `DUPLICATE_EMAIL` | 이미 존재하는 이메일 |
+
+---
+
+### POST /api/auth/login
 
 로그인
 
-**Request Body**
+**Request**
 ```json
 {
   "email": "user@example.com",
@@ -57,43 +96,69 @@
 **Response** `200 OK`
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": 1,
-    "email": "user@example.com",
-    "nickname": "닉네임"
-  }
+  "success": true,
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+    "refreshToken": "eyJhbGciOiJIUzI1NiJ9...",
+    "expiresIn": 3600000
+  },
+  "error": null
 }
 ```
+> `expiresIn`: Access Token 유효 시간 (밀리초)
 
-### POST /auth/refresh
+**에러**
+| 코드 | 설명 |
+|------|------|
+| `USER_NOT_FOUND` | 존재하지 않는 사용자 |
+| `INVALID_PASSWORD` | 비밀번호 불일치 |
 
-토큰 재발급 (RTR 방식: Refresh Token도 새로 발급)
+---
 
-**Request Body**
+### POST /api/auth/reissue
+
+토큰 재발급 (RTR: Refresh Token Rotation)
+
+**Request**
 ```json
 {
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9..."
 }
 ```
 
 **Response** `200 OK`
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "success": true,
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+    "refreshToken": "eyJhbGciOiJIUzI1NiJ9...",
+    "expiresIn": 3600000
+  },
+  "error": null
 }
 ```
 
-### POST /auth/logout
+**에러**
+| 코드 | 설명 |
+|------|------|
+| `INVALID_TOKEN` | 유효하지 않은 Refresh Token |
 
-로그아웃 (Redis에서 Refresh Token 삭제)
+---
 
-**Request Body**
+### POST /api/auth/logout
+
+로그아웃
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request**
 ```json
 {
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9..."
 }
 ```
 
@@ -101,94 +166,106 @@
 
 ---
 
-## 2. Habit
+## 2. Habit API (습관 정의)
 
-습관 정의 관리. 시스템 습관(user_id=null)과 커스텀 습관 구분.
+### GET /api/habits
 
-| 기능 | Method | Endpoint | 인증 |
-|------|--------|----------|------|
-| 시스템 습관 목록 조회 | GET | `/habits?type=system` | O |
-| 커스텀 습관 생성 | POST | `/habits` | O |
-| 커스텀 습관 수정 | PUT | `/habits/{id}` | O |
-| 커스텀 습관 삭제 | DELETE | `/habits/{id}` | O |
+습관 목록 조회
 
-### GET /habits?type=system
-
-시스템 습관 목록 조회 (연결된 뱃지세트 미리보기 포함)
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
 
 **Query Parameters**
-- `type`: `system` (필수)
+| 파라미터 | 필수 | 설명 |
+|----------|------|------|
+| `type` | X | `system`: 시스템 습관, `custom`: 내 커스텀 습관 |
 
 **Response** `200 OK`
 ```json
 {
-  "habits": [
-    {
-      "id": 1,
-      "name": "달리기",
-      "type": "PRACTICE",
-      "badgeSets": [
-        {
-          "id": 1,
-          "name": "거리 도전",
-          "description": "달린 거리로 뱃지 획득"
-        },
-        {
-          "id": 2,
-          "name": "스트릭 도전",
-          "description": "연속 달리기 일수로 뱃지 획득"
-        }
-      ]
-    },
-    {
-      "id": 2,
-      "name": "금연",
-      "type": "ABSTINENCE",
-      "badgeSets": [
-        {
-          "id": 3,
-          "name": "절약 금액 도전",
-          "description": "금연으로 절약한 금액 뱃지"
-        }
-      ]
-    }
-  ]
+  "success": true,
+  "data": {
+    "habits": [
+      {
+        "id": 1,
+        "name": "달리기",
+        "description": "매일 30분 달리기",
+        "icon": "🏃",
+        "type": "PRACTICE",
+        "isSystem": true
+      },
+      {
+        "id": 2,
+        "name": "금연",
+        "description": "담배 끊기",
+        "icon": "🚭",
+        "type": "ABSTINENCE",
+        "isSystem": true
+      }
+    ],
+    "totalCount": 2
+  },
+  "error": null
 }
 ```
 
-### POST /habits
+---
+
+### POST /api/habits
 
 커스텀 습관 생성
 
-**Request Body**
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request**
 ```json
 {
-  "name": "명상하기",
+  "name": "독서하기",
+  "description": "매일 30분 책 읽기",
+  "icon": "📚",
   "type": "PRACTICE"
 }
 ```
+> `type`: `PRACTICE`(실천) 또는 `ABSTINENCE`(금지)
 
 **Response** `201 Created`
 ```json
 {
-  "id": 10,
-  "name": "명상하기",
-  "type": "PRACTICE",
-  "userId": 1
+  "success": true,
+  "data": {
+    "id": 10,
+    "name": "독서하기",
+    "description": "매일 30분 책 읽기",
+    "icon": "📚",
+    "type": "PRACTICE",
+    "isSystem": false
+  },
+  "error": null
 }
 ```
 
-### PUT /habits/{id}
+---
+
+### PUT /api/habits/{id}
 
 커스텀 습관 수정 (본인 것만)
 
-**Path Parameters**
-- `id`: 습관 ID
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
 
-**Request Body**
+**Request**
 ```json
 {
-  "name": "아침 명상",
+  "name": "아침 독서",
+  "description": "기상 후 30분 책 읽기",
+  "icon": "📖",
   "type": "PRACTICE"
 }
 ```
@@ -196,43 +273,133 @@
 **Response** `200 OK`
 ```json
 {
-  "id": 10,
-  "name": "아침 명상",
-  "type": "PRACTICE",
-  "userId": 1
+  "success": true,
+  "data": {
+    "id": 10,
+    "name": "아침 독서",
+    "description": "기상 후 30분 책 읽기",
+    "icon": "📖",
+    "type": "PRACTICE",
+    "isSystem": false
+  },
+  "error": null
 }
 ```
 
-### DELETE /habits/{id}
+**에러**
+| 코드 | 설명 |
+|------|------|
+| `HABIT_NOT_FOUND` | 존재하지 않는 습관 |
+| `HABIT_NOT_OWNED` | 본인 습관이 아님 |
+| `SYSTEM_HABIT_NOT_MODIFIABLE` | 시스템 습관은 수정 불가 |
 
-커스텀 습관 삭제 (본인 것만, 연관 데이터 Cascade 삭제)
+---
 
-**Path Parameters**
-- `id`: 습관 ID
+### DELETE /api/habits/{id}
+
+커스텀 습관 삭제 (본인 것만)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
 
 **Response** `204 No Content`
 
 ---
 
-## 3. UserHabit
+## 3. UserHabit API (내 습관 등록/관리)
 
-사용자의 습관 등록/관리. 습관 등록 시 뱃지세트 자동 연결.
+### GET /api/user-habits
 
-| 기능 | Method | Endpoint | 인증 |
-|------|--------|----------|------|
-| 내 습관 등록 | POST | `/user-habits` | O |
-| 내 습관 목록 조회 | GET | `/user-habits` | O |
-| 내 습관 상세 조회 | GET | `/user-habits/{id}` | O |
-| 내 습관 삭제 | DELETE | `/user-habits/{id}` | O |
+내 습관 목록 조회
 
-### POST /user-habits
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
 
-내 습관 등록
+**Response** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "userHabits": [
+      {
+        "id": 1,
+        "habitId": 1,
+        "habitName": "달리기",
+        "habitType": "PRACTICE",
+        "currentStreak": 7,
+        "lastCheckedDate": "2025-01-29",
+        "createdAt": "2025-01-01T10:00:00"
+      },
+      {
+        "id": 2,
+        "habitId": 2,
+        "habitName": "금연",
+        "habitType": "ABSTINENCE",
+        "currentStreak": 30,
+        "lastCheckedDate": "2025-01-29",
+        "createdAt": "2025-01-01T10:00:00"
+      }
+    ],
+    "totalCount": 2
+  },
+  "error": null
+}
+```
 
-- 시스템 습관 → 시스템 뱃지세트 + 범용 스트릭 뱃지세트 자동 연결
-- 커스텀 습관 → 범용 스트릭 뱃지세트만 자동 연결
+---
 
-**Request Body**
+### GET /api/user-habits/{id}
+
+내 습관 상세 조회
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "habit": {
+      "id": 1,
+      "name": "달리기",
+      "description": "매일 30분 달리기",
+      "icon": "🏃",
+      "type": "PRACTICE"
+    },
+    "currentStreak": 7,
+    "lastCheckedDate": "2025-01-29",
+    "createdAt": "2025-01-01T10:00:00"
+  },
+  "error": null
+}
+```
+
+**에러**
+| 코드 | 설명 |
+|------|------|
+| `USER_HABIT_NOT_FOUND` | 등록된 습관 없음 |
+| `ACCESS_DENIED` | 본인 습관이 아님 |
+
+---
+
+### POST /api/user-habits
+
+습관 등록
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request**
 ```json
 {
   "habitId": 1
@@ -242,474 +409,659 @@
 **Response** `201 Created`
 ```json
 {
-  "id": 1,
-  "habit": {
+  "success": true,
+  "data": {
     "id": 1,
-    "name": "달리기",
-    "type": "PRACTICE"
+    "habitId": 1,
+    "habitName": "달리기",
+    "habitType": "PRACTICE",
+    "currentStreak": 0,
+    "lastCheckedDate": null,
+    "createdAt": "2025-01-30T10:00:00"
   },
-  "currentStreak": 0,
-  "createdAt": "2025-01-27T10:00:00Z"
+  "error": null
 }
 ```
 
-### GET /user-habits
+**에러**
+| 코드 | 설명 |
+|------|------|
+| `HABIT_NOT_FOUND` | 존재하지 않는 습관 |
+| `DUPLICATE_USER_HABIT` | 이미 등록된 습관 |
+| `HABIT_NOT_OWNED` | 타인의 커스텀 습관 |
 
-내 습관 목록 조회
+---
 
-**Response** `200 OK`
-```json
-{
-  "userHabits": [
-    {
-      "id": 1,
-      "habit": {
-        "id": 1,
-        "name": "달리기",
-        "type": "PRACTICE"
-      },
-      "currentStreak": 7,
-      "lastCheckedDate": "2025-01-26"
-    },
-    {
-      "id": 2,
-      "habit": {
-        "id": 2,
-        "name": "금연",
-        "type": "ABSTINENCE"
-      },
-      "currentStreak": 30,
-      "lastCheckedDate": null
-    }
-  ]
-}
+### DELETE /api/user-habits/{id}
+
+습관 해제 (관련 기록도 삭제됨)
+
+**Headers**
 ```
-
-### GET /user-habits/{id}
-
-내 습관 상세 조회 (뱃지 진행 상황 포함)
-
-**Path Parameters**
-- `id`: UserHabit ID
-
-**Response** `200 OK`
-```json
-{
-  "id": 1,
-  "habit": {
-    "id": 1,
-    "name": "달리기",
-    "type": "PRACTICE"
-  },
-  "currentStreak": 7,
-  "lastCheckedDate": "2025-01-26",
-  "badgeProgress": [
-    {
-      "badgeSetName": "스트릭 도전",
-      "currentBadge": {
-        "name": "7일 연속 달성",
-        "icon": "🔥",
-        "conditionValue": 7
-      },
-      "currentValue": 7,
-      "progress": 100,
-      "nextBadge": {
-        "name": "30일 연속 달성",
-        "conditionValue": 30
-      }
-    },
-    {
-      "badgeSetName": "거리 도전",
-      "currentBadge": {
-        "name": "하프마라톤 완주",
-        "icon": "🏃",
-        "conditionValue": 21
-      },
-      "currentValue": 15,
-      "progress": 71,
-      "nextBadge": null
-    }
-  ]
-}
+Authorization: Bearer {accessToken}
 ```
-
-### DELETE /user-habits/{id}
-
-내 습관 삭제 (연관 데이터 Cascade 삭제)
-
-**Path Parameters**
-- `id`: UserHabit ID
 
 **Response** `204 No Content`
 
 ---
 
-## 4. HabitLog
+## 4. HabitLog API (습관 체크 기록)
 
-습관 체크 기록. 과거 수정은 3일 이내만 허용.
+### POST /api/habit-logs
 
-| 기능 | Method | Endpoint | 인증 |
-|------|--------|----------|------|
-| 습관 체크 | POST | `/user-habits/{id}/logs` | O |
-| 체크 취소 | DELETE | `/user-habits/{id}/logs/{date}` | O |
-| 특정 습관 로그 조회 | GET | `/user-habits/{id}/logs?date=` | O |
-| 날짜별 전체 습관 현황 | GET | `/habit-logs?date=` | O |
+습관 체크
 
-### POST /user-habits/{id}/logs
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
 
-습관 체크 (3일 이내만 가능)
-
-**Path Parameters**
-- `id`: UserHabit ID
-
-**Request Body**
+**Request**
 ```json
 {
-  "date": "2025-01-27"
+  "userHabitId": 1,
+  "date": "2025-01-30",
+  "checked": true
 }
 ```
-- `date` 생략 시 오늘 날짜
+> `date` 생략 시 오늘 날짜
 
 **Response** `201 Created`
 ```json
 {
-  "logId": 1,
-  "date": "2025-01-27",
-  "updatedStreak": 8
+  "success": true,
+  "data": {
+    "id": 1,
+    "userHabitId": 1,
+    "habitName": "달리기",
+    "date": "2025-01-30",
+    "checked": true,
+    "currentStreak": 8,
+    "createdAt": "2025-01-30T22:00:00"
+  },
+  "error": null
 }
 ```
 
-**Error** `400 Bad Request`
+**에러**
+| 코드 | 설명 |
+|------|------|
+| `USER_HABIT_NOT_FOUND` | 등록된 습관 없음 |
+| `DUPLICATE_HABIT_LOG` | 해당 날짜에 이미 체크됨 |
+
+---
+
+### GET /api/habit-logs
+
+날짜별 습관 현황 조회
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Query Parameters**
+| 파라미터 | 필수 | 설명 |
+|----------|------|------|
+| `date` | X | 조회 날짜 (기본값: 오늘) |
+
+**Response** `200 OK`
 ```json
 {
-  "error": "PAST_DATE_LIMIT_EXCEEDED",
-  "message": "3일 이전 기록은 수정할 수 없습니다"
+  "success": true,
+  "data": {
+    "date": "2025-01-30",
+    "logs": [
+      {
+        "id": 1,
+        "userHabitId": 1,
+        "habitName": "달리기",
+        "habitType": "PRACTICE",
+        "checked": true,
+        "currentStreak": 8
+      },
+      {
+        "id": null,
+        "userHabitId": 2,
+        "habitName": "금연",
+        "habitType": "ABSTINENCE",
+        "checked": false,
+        "currentStreak": 30
+      }
+    ],
+    "totalCount": 2
+  },
+  "error": null
 }
 ```
+> `id`가 null이면 해당 날짜에 아직 체크하지 않은 상태
 
-### DELETE /user-habits/{id}/logs/{date}
+---
 
-체크 취소 (3일 이내만 가능)
+### DELETE /api/habit-logs/{id}
 
-**Path Parameters**
-- `id`: UserHabit ID
-- `date`: 날짜 (YYYY-MM-DD)
+습관 체크 취소 (스트릭 재계산됨)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
 
 **Response** `204 No Content`
 
-### GET /user-habits/{id}/logs
+**에러**
+| 코드 | 설명 |
+|------|------|
+| `HABIT_LOG_NOT_FOUND` | 존재하지 않는 기록 |
+| `ACCESS_DENIED` | 본인 기록이 아님 |
 
-특정 습관의 로그 조회
+---
 
-**Path Parameters**
-- `id`: UserHabit ID
+## 5. DailyPage API (오늘한장)
 
-**Query Parameters**
-- `date`: 조회할 날짜 (YYYY-MM-DD)
+### POST /api/daily-pages
 
-**Response** `200 OK`
+페이지 작성
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request**
 ```json
 {
-  "logId": 1,
-  "date": "2025-01-27",
-  "checked": true,
-  "createdAt": "2025-01-27T22:00:00Z"
+  "content": "오늘 하루도 열심히 살았다. 아침에 달리기를 하고...",
+  "date": "2025-01-30"
+}
+```
+> `date` 생략 시 오늘 날짜
+
+**Response** `201 Created`
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "date": "2025-01-30",
+    "content": "오늘 하루도 열심히 살았다. 아침에 달리기를 하고...",
+    "createdAt": "2025-01-30T22:00:00",
+    "updatedAt": "2025-01-30T22:00:00"
+  },
+  "error": null
 }
 ```
 
-### GET /habit-logs
+**에러**
+| 코드 | 설명 |
+|------|------|
+| `DUPLICATE_PAGE` | 해당 날짜에 이미 페이지 존재 |
 
-날짜별 전체 습관 현황 조회 (캘린더용)
+---
+
+### GET /api/daily-pages
+
+날짜별 페이지 조회
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
 
 **Query Parameters**
-- `date`: 조회할 날짜 (YYYY-MM-DD)
+| 파라미터 | 필수 | 설명 |
+|----------|------|------|
+| `date` | O | 조회 날짜 |
 
 **Response** `200 OK`
 ```json
 {
-  "date": "2025-01-27",
-  "logs": [
-    {
-      "userHabitId": 1,
-      "habitName": "달리기",
-      "habitType": "PRACTICE",
-      "checked": true
-    },
-    {
-      "userHabitId": 2,
-      "habitName": "금연",
-      "habitType": "ABSTINENCE",
-      "checked": false
-    }
-  ]
+  "success": true,
+  "data": {
+    "id": 1,
+    "date": "2025-01-30",
+    "content": "오늘 하루도 열심히 살았다...",
+    "createdAt": "2025-01-30T22:00:00",
+    "updatedAt": "2025-01-30T22:30:00"
+  },
+  "error": null
+}
+```
+
+**에러**
+| 코드 | 설명 |
+|------|------|
+| `PAGE_NOT_FOUND` | 해당 날짜에 페이지 없음 |
+
+---
+
+### PUT /api/daily-pages/{id}
+
+페이지 수정
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Request**
+```json
+{
+  "content": "수정된 내용..."
+}
+```
+
+**Response** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "date": "2025-01-30",
+    "content": "수정된 내용...",
+    "createdAt": "2025-01-30T22:00:00",
+    "updatedAt": "2025-01-30T23:00:00"
+  },
+  "error": null
 }
 ```
 
 ---
 
-## 5. DailyPage
-
-매일 한 페이지 기록. MVP에서는 1분할 자유 텍스트만 지원.
-
-| 기능 | Method | Endpoint | 인증 |
-|------|--------|----------|------|
-| 페이지 작성/수정 | PUT | `/daily-pages/{date}` | O |
-| 페이지 조회 | GET | `/daily-pages/{date}` | O |
-| 페이지 삭제 | DELETE | `/daily-pages/{date}` | O |
-| 월별 작성 여부 조회 | GET | `/daily-pages?year=&month=` | O |
-
-### PUT /daily-pages/{date}
-
-페이지 작성/수정 (Upsert)
-
-**Path Parameters**
-- `date`: 날짜 (YYYY-MM-DD)
-
-**Request Body**
-```json
-{
-  "content": "오늘 하루도 열심히 살았다. 아침에 달리기를 하고..."
-}
-```
-
-**Response** `200 OK`
-```json
-{
-  "id": 1,
-  "date": "2025-01-27",
-  "content": "오늘 하루도 열심히 살았다. 아침에 달리기를 하고...",
-  "createdAt": "2025-01-27T22:00:00Z",
-  "updatedAt": "2025-01-27T22:30:00Z"
-}
-```
-
-### GET /daily-pages/{date}
-
-특정 날짜 페이지 조회
-
-**Path Parameters**
-- `date`: 날짜 (YYYY-MM-DD)
-
-**Response** `200 OK`
-```json
-{
-  "id": 1,
-  "date": "2025-01-27",
-  "content": "오늘 하루도 열심히 살았다. 아침에 달리기를 하고...",
-  "createdAt": "2025-01-27T22:00:00Z",
-  "updatedAt": "2025-01-27T22:30:00Z"
-}
-```
-
-**Response** `404 Not Found` (해당 날짜에 작성한 페이지 없음)
-```json
-{
-  "error": "PAGE_NOT_FOUND",
-  "message": "해당 날짜에 작성한 페이지가 없습니다"
-}
-```
-
-### DELETE /daily-pages/{date}
+### DELETE /api/daily-pages/{id}
 
 페이지 삭제
 
-**Path Parameters**
-- `date`: 날짜 (YYYY-MM-DD)
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
 
 **Response** `204 No Content`
 
-### GET /daily-pages
+---
 
-월별 작성 여부 조회 (캘린더 표시용)
+### GET /api/daily-pages/calendar
+
+월별 캘린더 조회
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
 
 **Query Parameters**
-- `year`: 연도 (예: 2025)
-- `month`: 월 (예: 1)
+| 파라미터 | 필수 | 설명 |
+|----------|------|------|
+| `year` | O | 연도 (예: 2025) |
+| `month` | O | 월 (예: 1) |
 
 **Response** `200 OK`
 ```json
 {
-  "year": 2025,
-  "month": 1,
-  "days": [
-    { "date": "2025-01-01", "hasContent": true },
-    { "date": "2025-01-02", "hasContent": false },
-    { "date": "2025-01-03", "hasContent": true }
-  ]
+  "success": true,
+  "data": {
+    "year": 2025,
+    "month": 1,
+    "days": [
+      {
+        "date": "2025-01-01",
+        "hasContent": true,
+        "preview": "새해 첫날..."
+      },
+      {
+        "date": "2025-01-02",
+        "hasContent": false,
+        "preview": null
+      }
+    ]
+  },
+  "error": null
 }
 ```
 
 ---
 
-## 6. Badge
+## 6. Badge API (뱃지)
 
-뱃지 진행 상황 및 획득 목록 조회.
+### GET /api/badges
 
-| 기능 | Method | Endpoint | 인증 |
-|------|--------|----------|------|
-| 특정 습관 뱃지 진행 현황 | GET | `/user-habits/{id}/badge-sets` | O |
-| 내 뱃지세트 전체 진행 현황 | GET | `/user-badge-sets` | O |
-| 획득한 뱃지 목록 | GET | `/user-badges` | O |
+전체 뱃지 세트 조회
 
-### GET /user-habits/{id}/badge-sets
-
-특정 습관의 뱃지세트 진행 현황
-
-**Path Parameters**
-- `id`: UserHabit ID
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
 
 **Response** `200 OK`
 ```json
 {
-  "badgeSets": [
-    {
-      "badgeSetName": "스트릭 도전",
-      "currentBadge": {
-        "name": "7일 연속 달성",
-        "icon": "🔥",
-        "conditionValue": 7
-      },
-      "currentValue": 7,
-      "progress": 100,
-      "nextBadge": {
-        "name": "30일 연속 달성",
-        "conditionValue": 30
+  "success": true,
+  "data": {
+    "badgeSets": [
+      {
+        "id": 1,
+        "name": "스트릭 도전",
+        "description": "연속 달성 일수로 뱃지 획득",
+        "badges": [
+          {
+            "id": 1,
+            "name": "7일 연속",
+            "description": "7일 연속 달성",
+            "icon": "🔥",
+            "conditionValue": 7
+          },
+          {
+            "id": 2,
+            "name": "30일 연속",
+            "description": "30일 연속 달성",
+            "icon": "🔥🔥",
+            "conditionValue": 30
+          }
+        ]
       }
-    }
-  ]
+    ]
+  },
+  "error": null
 }
 ```
 
-### GET /user-badge-sets
+---
 
-내 뱃지세트 전체 진행 현황
+### GET /api/badges/my
+
+내 뱃지 현황 (획득 + 진행 중)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
 
 **Response** `200 OK`
 ```json
 {
-  "badgeSets": [
-    {
-      "habitName": "달리기",
-      "badgeSetName": "스트릭 도전",
-      "currentBadge": {
-        "name": "7일 연속 달성",
-        "icon": "🔥",
-        "conditionValue": 7
-      },
-      "currentValue": 7,
-      "progress": 100
-    },
-    {
-      "habitName": "금연",
-      "badgeSetName": "절약 금액 도전",
-      "currentBadge": {
-        "name": "치킨 1마리 값 절약!",
-        "icon": "🍗",
-        "conditionValue": 1
-      },
-      "currentValue": 30,
-      "progress": 100
-    }
-  ]
+  "success": true,
+  "data": {
+    "acquired": [
+      {
+        "id": 1,
+        "badgeId": 1,
+        "badgeName": "7일 연속",
+        "badgeIcon": "🔥",
+        "habitName": "달리기",
+        "acquiredAt": "2025-01-07T10:00:00"
+      }
+    ],
+    "inProgress": [
+      {
+        "badgeSetName": "스트릭 도전",
+        "habitName": "달리기",
+        "currentValue": 7,
+        "nextBadge": {
+          "name": "30일 연속",
+          "conditionValue": 30
+        },
+        "progress": 23
+      }
+    ]
+  },
+  "error": null
 }
 ```
 
-### GET /user-badges
+---
 
-획득한 뱃지 목록
+### GET /api/badges/recent
+
+최근 획득 뱃지 조회
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Query Parameters**
+| 파라미터 | 필수 | 설명 |
+|----------|------|------|
+| `limit` | X | 조회 개수 (기본값: 5) |
 
 **Response** `200 OK`
 ```json
 {
-  "badges": [
+  "success": true,
+  "data": [
     {
-      "badgeName": "7일 연속 달성",
+      "id": 1,
+      "badgeId": 1,
+      "badgeName": "7일 연속",
       "badgeIcon": "🔥",
       "habitName": "달리기",
-      "completedAt": "2025-01-27T22:00:00Z"
-    },
-    {
-      "badgeName": "치킨 1마리 값 절약!",
-      "badgeIcon": "🍗",
-      "habitName": "금연",
-      "completedAt": "2025-01-20T10:00:00Z"
+      "acquiredAt": "2025-01-07T10:00:00"
     }
-  ]
+  ],
+  "error": null
 }
 ```
 
 ---
 
-## 7. AiFeedback
+### GET /api/badges/sets
 
-AI 피드백 (오늘의 한마디). 접속 시 생성되어 저장, 이후 캘린더에서 열람 가능.
+시스템 뱃지세트 목록 조회
 
-| 기능 | Method | Endpoint | 인증 |
-|------|--------|----------|------|
-| 오늘 피드백 조회 | GET | `/ai-feedback/today` | O |
-| 특정 날짜 피드백 조회 | GET | `/ai-feedback/{date}` | O |
+범용으로 사용 가능한 뱃지세트 목록을 조회합니다.
 
-### GET /ai-feedback/today
-
-오늘 피드백 조회 (없으면 어제 기록 기반 생성 후 반환)
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
 
 **Response** `200 OK`
 ```json
 {
-  "id": 1,
-  "date": "2025-01-27",
-  "message": "어제 달리기 7일 연속 성공! 이 페이스 대단해요 💪 금연도 한 달째 유지 중이시네요. 절약한 돈으로 맛있는 거 드세요!",
-  "createdAt": "2025-01-27T08:00:00Z"
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "스트릭 도전",
+      "description": "연속 달성 일수로 뱃지 획득",
+      "badges": [...]
+    }
+  ],
+  "error": null
 }
 ```
 
-### GET /ai-feedback/{date}
+---
 
-특정 날짜 피드백 조회 (해당 날짜에 접속하지 않았으면 null)
+### GET /api/badges/sets/habit/{habitId}
 
-**Path Parameters**
-- `date`: 날짜 (YYYY-MM-DD)
+습관별 적용 가능 뱃지세트 조회
+
+특정 습관에 적용 가능한 뱃지세트 목록을 조회합니다.
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
 
 **Response** `200 OK`
 ```json
 {
-  "id": 1,
-  "date": "2025-01-27",
-  "message": "어제 달리기 7일 연속 성공! 이 페이스 대단해요 💪",
-  "createdAt": "2025-01-27T08:00:00Z"
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "스트릭 도전",
+      "description": "연속 달성 일수로 뱃지 획득",
+      "badges": [...]
+    }
+  ],
+  "error": null
 }
 ```
 
-**Response** `404 Not Found` (해당 날짜에 피드백 없음)
+---
+
+## 7. AiFeedback API (AI 피드백)
+
+### GET /api/ai-feedback/today
+
+오늘의 피드백 조회 (없으면 자동 생성)
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response** `200 OK`
 ```json
 {
-  "error": "FEEDBACK_NOT_FOUND",
-  "message": "해당 날짜의 피드백이 없습니다"
+  "success": true,
+  "data": {
+    "id": 1,
+    "date": "2025-01-30",
+    "message": "어제 달리기 7일 연속 성공! 이 페이스 대단해요 💪 금연도 한 달째 유지 중이시네요. 절약한 돈으로 맛있는 거 드세요!",
+    "createdAt": "2025-01-30T08:00:00"
+  },
+  "error": null
+}
+```
+
+**에러**
+| 코드 | 설명 |
+|------|------|
+| `NO_DATA_FOR_FEEDBACK` | 어제 데이터가 없어 피드백 생성 불가 |
+
+---
+
+### GET /api/ai-feedback
+
+특정 날짜 피드백 조회
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Query Parameters**
+| 파라미터 | 필수 | 설명 |
+|----------|------|------|
+| `date` | O | 조회 날짜 |
+
+**Response** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "date": "2025-01-30",
+    "message": "어제 달리기 7일 연속 성공!...",
+    "createdAt": "2025-01-30T08:00:00"
+  },
+  "error": null
+}
+```
+
+**에러**
+| 코드 | 설명 |
+|------|------|
+| `FEEDBACK_NOT_FOUND` | 해당 날짜에 피드백 없음 |
+
+---
+
+### GET /api/ai-feedback/history
+
+월별 피드백 히스토리
+
+**Headers**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Query Parameters**
+| 파라미터 | 필수 | 설명 |
+|----------|------|------|
+| `year` | O | 연도 |
+| `month` | O | 월 |
+
+**Response** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "year": 2025,
+    "month": 1,
+    "feedbacks": [
+      {
+        "id": 1,
+        "date": "2025-01-30",
+        "message": "어제 달리기 7일 연속 성공!...",
+        "createdAt": "2025-01-30T08:00:00"
+      }
+    ],
+    "totalCount": 1
+  },
+  "error": null
 }
 ```
 
 ---
 
-## ERD 변경사항
+## 인증 가이드
 
-### BadgeSet 테이블
+### 토큰 사용 방법
 
-```diff
-- habit_id bigint [not null, ref: > Habit.id]
-+ habit_id bigint [null, ref: > Habit.id, note: 'null이면 범용(습관 무관)']
+1. 로그인 후 `accessToken`과 `refreshToken` 저장
+2. API 요청 시 Header에 Access Token 포함:
+   ```
+   Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
+   ```
+3. Access Token 만료 시 `/api/auth/reissue`로 재발급
+4. 새로운 `refreshToken`도 함께 업데이트 (RTR)
+
+### 토큰 만료 처리
+
+```
+Access Token 만료 → 401 EXPIRED_TOKEN
+  ↓
+Refresh Token으로 재발급 요청
+  ↓
+성공 → 새 토큰으로 원래 요청 재시도
+실패 → 로그인 화면으로 이동
 ```
 
 ---
 
-## 설계 결정 요약
+## API 엔드포인트 요약
 
-| 항목 | 결정 | 이유 |
-|------|------|------|
-| Refresh Token 저장소 | Redis | TTL 자동 만료, 빠른 조회 |
-| Token 방식 | RTR | 보안 강화 (탈취 시 1회만 사용 가능) |
-| 습관 체크/취소 | POST/DELETE 분리 | REST 원칙 준수, 실수 방지 |
-| 과거 수정 기한 | 3일 | 무분별한 수정 방지 |
-| DailyPage 작성/수정 | PUT Upsert | 단일 엔드포인트로 간소화 |
-| 날짜별 조회 | 별도 API (A방식) | REST 원칙 준수 |
-| 범용 뱃지 | BadgeSet.habit_id=null | 모든 습관에 적용 가능한 템플릿 |
-| 커스텀 습관 뱃지 | 범용만 연결 | MVP 범위 축소 |
+| 도메인 | Method | Endpoint | 설명 | 인증 |
+|--------|--------|----------|------|:----:|
+| Auth | POST | /api/auth/signup | 회원가입 | - |
+| Auth | POST | /api/auth/login | 로그인 | - |
+| Auth | POST | /api/auth/reissue | 토큰 재발급 | - |
+| Auth | POST | /api/auth/logout | 로그아웃 | ✓ |
+| Habit | GET | /api/habits | 습관 목록 | ✓ |
+| Habit | POST | /api/habits | 커스텀 습관 생성 | ✓ |
+| Habit | PUT | /api/habits/{id} | 커스텀 습관 수정 | ✓ |
+| Habit | DELETE | /api/habits/{id} | 커스텀 습관 삭제 | ✓ |
+| UserHabit | GET | /api/user-habits | 내 습관 목록 | ✓ |
+| UserHabit | GET | /api/user-habits/{id} | 내 습관 상세 | ✓ |
+| UserHabit | POST | /api/user-habits | 습관 등록 | ✓ |
+| UserHabit | DELETE | /api/user-habits/{id} | 습관 해제 | ✓ |
+| HabitLog | GET | /api/habit-logs | 날짜별 현황 | ✓ |
+| HabitLog | POST | /api/habit-logs | 습관 체크 | ✓ |
+| HabitLog | DELETE | /api/habit-logs/{id} | 체크 취소 | ✓ |
+| DailyPage | GET | /api/daily-pages | 날짜별 조회 | ✓ |
+| DailyPage | POST | /api/daily-pages | 페이지 작성 | ✓ |
+| DailyPage | PUT | /api/daily-pages/{id} | 페이지 수정 | ✓ |
+| DailyPage | DELETE | /api/daily-pages/{id} | 페이지 삭제 | ✓ |
+| DailyPage | GET | /api/daily-pages/calendar | 월별 캘린더 | ✓ |
+| Badge | GET | /api/badges | 전체 뱃지 세트 | ✓ |
+| Badge | GET | /api/badges/my | 내 뱃지 현황 | ✓ |
+| Badge | GET | /api/badges/recent | 최근 획득 뱃지 | ✓ |
+| Badge | GET | /api/badges/sets | 시스템 뱃지세트 | ✓ |
+| Badge | GET | /api/badges/sets/habit/{id} | 습관별 뱃지세트 | ✓ |
+| AiFeedback | GET | /api/ai-feedback/today | 오늘 피드백 | ✓ |
+| AiFeedback | GET | /api/ai-feedback | 날짜별 피드백 | ✓ |
+| AiFeedback | GET | /api/ai-feedback/history | 월별 히스토리 | ✓ |

@@ -32,20 +32,24 @@ public class HabitController {
     private final UserRepository userRepository;
 
     /**
-     * 시스템 습관 목록 조회
-     * GET /api/habits?type=system
+     * 습관 목록 조회
+     * GET /api/habits
+     * GET /api/habits?type=system (시스템 습관만)
+     * GET /api/habits?type=custom (내 커스텀 습관만)
      */
-    @Operation(summary = "시스템 습관 목록 조회", description = "시스템에서 제공하는 습관 목록을 조회합니다. (뱃지세트 미리보기 포함)")
+    @Operation(summary = "습관 목록 조회", description = "습관 목록을 조회합니다. type 미지정시 시스템 습관 반환")
     @GetMapping
-    public ResponseEntity<ApiResponse<SystemHabitListResponse>> getSystemHabits(
-            @Parameter(description = "습관 타입 (system만 지원)", example = "system")
-            @RequestParam String type) {
+    public ResponseEntity<ApiResponse<SystemHabitListResponse>> getHabits(
+            @Parameter(description = "습관 타입 (system/custom, 기본값: system)", example = "system")
+            @RequestParam(required = false, defaultValue = "system") String type) {
 
-        // 현재는 system 타입만 지원
-        if (!"system".equals(type)) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        if ("custom".equals(type)) {
+            Long userId = getCurrentUserId();
+            SystemHabitListResponse response = habitService.getCustomHabits(userId);
+            return ResponseEntity.ok(ApiResponse.success(response));
         }
 
+        // 기본값: system
         SystemHabitListResponse response = habitService.getSystemHabits();
         return ResponseEntity.ok(ApiResponse.success(response));
     }

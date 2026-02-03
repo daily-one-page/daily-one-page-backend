@@ -1,6 +1,7 @@
 package com.dailyonepage.backend.domain.auth.controller;
 
 import com.dailyonepage.backend.domain.auth.dto.LoginRequest;
+import com.dailyonepage.backend.domain.auth.dto.LogoutRequest;
 import com.dailyonepage.backend.domain.auth.dto.SignupRequest;
 import com.dailyonepage.backend.domain.auth.dto.TokenReissueRequest;
 import com.dailyonepage.backend.domain.auth.dto.TokenResponse;
@@ -58,5 +59,16 @@ public class AuthController {
     public ResponseEntity<ApiResponse<TokenResponse>> reissue(@Valid @RequestBody TokenReissueRequest request) {
         TokenResponse response = authService.reissue(request);
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * 로그아웃
+     * POST /api/auth/logout
+     */
+    @Operation(summary = "로그아웃", description = "Refresh Token을 무효화합니다.")
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody LogoutRequest request) {
+        authService.logout(request);
+        return ResponseEntity.noContent().build();
     }
 }

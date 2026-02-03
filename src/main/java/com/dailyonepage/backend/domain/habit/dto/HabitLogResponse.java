@@ -53,4 +53,22 @@ public class HabitLogResponse {
                 .createdAt(habitLog.getCreatedAt())
                 .build();
     }
+
+    /**
+     * 체크하지 않은 습관용 (id=null, checked=false)
+     */
+    public static HabitLogResponse fromUserHabitUnchecked(
+            com.dailyonepage.backend.domain.habit.entity.UserHabit userHabit,
+            LocalDate date) {
+        return HabitLogResponse.builder()
+                .id(null)
+                .userHabitId(userHabit.getId())
+                .habitName(userHabit.getHabit().getName())
+                .habitType(userHabit.getHabit().getType())
+                .date(date)
+                .checked(false)
+                .currentStreak(userHabit.getCurrentStreak())
+                .createdAt(null)
+                .build();
+    }
 }

@@ -197,7 +197,7 @@ curl -X DELETE http://localhost:8080/api/daily-pages/1 \
 
 ## 관련 학습 자료
 
-- [Spring에서 날짜/시간 다루기](./lectures/spring-datetime.md)
+- [Spring에서 날짜/시간 다루기](../lectures/spring-datetime.md)
 
 ---
 

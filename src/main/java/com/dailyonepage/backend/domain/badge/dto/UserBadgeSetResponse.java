@@ -49,7 +49,7 @@ public class UserBadgeSetResponse {
                 .currentValue(currentValue)
                 .remainingValue(remaining)
                 .progressPercent(Math.min(100, progress))
-                .startedAt(userBadgeSet.getStartedAt())
+                .startedAt(userBadgeSet.getCreatedAt())
                 .build();
     }
 }

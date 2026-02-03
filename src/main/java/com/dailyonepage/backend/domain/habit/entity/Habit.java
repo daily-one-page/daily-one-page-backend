@@ -35,6 +35,12 @@ public class Habit {
     @Column(nullable = false, length = 100)
     private String name;
 
+    @Column(length = 500)
+    private String description;
+
+    @Column(length = 10)
+    private String icon;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private HabitType type;
@@ -43,9 +49,11 @@ public class Habit {
     private LocalDateTime createdAt;
 
     @Builder
-    public Habit(User user, String name, HabitType type) {
+    public Habit(User user, String name, String description, String icon, HabitType type) {
         this.user = user;
         this.name = name;
+        this.description = description;
+        this.icon = icon;
         this.type = type;
         this.createdAt = LocalDateTime.now();
     }
@@ -61,8 +69,10 @@ public class Habit {
     }
 
     // 습관 정보 수정 (커스텀 습관만)
-    public void update(String name, HabitType type) {
+    public void update(String name, String description, String icon, HabitType type) {
         this.name = name;
+        this.description = description;
+        this.icon = icon;
         this.type = type;
     }
 

@@ -218,7 +218,7 @@ curl "http://localhost:8080/api/ai-feedback/history?year=2025&month=1" \
 
 ## 관련 학습 자료
 
-- [Spring에서 날짜/시간 다루기](./lectures/spring-datetime.md)
+- [Spring에서 날짜/시간 다루기](../lectures/spring-datetime.md)
 
 ---
 

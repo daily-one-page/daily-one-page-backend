@@ -49,6 +49,17 @@ public class BadgeService {
     }
 
     /**
+     * 전체 뱃지세트 목록 조회
+     */
+    public List<BadgeSetResponse> getAllBadgeSets() {
+        List<BadgeSet> allSets = badgeSetRepository.findAllWithBadges();
+
+        return allSets.stream()
+                .map(BadgeSetResponse::from)
+                .toList();
+    }
+
+    /**
      * 시스템 뱃지세트 목록 조회
      */
     public List<BadgeSetResponse> getSystemBadgeSets() {

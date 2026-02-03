@@ -229,8 +229,8 @@ curl http://localhost:8080/api/habit-logs \
 
 ## 관련 학습 자료
 
-- [JPA N+1 문제와 해결법](./lectures/jpa-n-plus-one.md)
-- [Spring에서 날짜/시간 다루기](./lectures/spring-datetime.md)
+- [JPA N+1 문제와 해결법](../lectures/jpa-n-plus-one.md)
+- [Spring에서 날짜/시간 다루기](../lectures/spring-datetime.md)
 
 ---
 

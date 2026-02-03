@@ -23,8 +23,17 @@ public class SystemHabitResponse {
     @Schema(description = "습관 이름", example = "달리기")
     private String name;
 
+    @Schema(description = "습관 설명", example = "매일 30분 달리기")
+    private String description;
+
+    @Schema(description = "아이콘 (이모지)", example = "🏃")
+    private String icon;
+
     @Schema(description = "습관 타입", example = "PRACTICE")
     private HabitType type;
+
+    @Schema(description = "시스템 습관 여부", example = "true")
+    private boolean isSystem;
 
     @Schema(description = "연결된 뱃지세트 목록")
     private List<BadgeSetSimpleResponse> badgeSets;
@@ -33,7 +42,10 @@ public class SystemHabitResponse {
         return SystemHabitResponse.builder()
                 .id(habit.getId())
                 .name(habit.getName())
+                .description(habit.getDescription())
+                .icon(habit.getIcon())
                 .type(habit.getType())
+                .isSystem(habit.isSystemHabit())
                 .badgeSets(badgeSets.stream()
                         .map(BadgeSetSimpleResponse::from)
                         .toList())

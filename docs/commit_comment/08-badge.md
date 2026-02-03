@@ -181,7 +181,7 @@ curl "http://localhost:8080/api/badges/recent?limit=3" \
 
 ## 관련 학습 자료
 
-- [JPA N+1 문제와 해결법](./lectures/jpa-n-plus-one.md)
+- [JPA N+1 문제와 해결법](../lectures/jpa-n-plus-one.md)
 
 ---
 

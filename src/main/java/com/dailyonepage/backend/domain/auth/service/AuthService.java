@@ -1,6 +1,7 @@
 package com.dailyonepage.backend.domain.auth.service;
 
 import com.dailyonepage.backend.domain.auth.dto.LoginRequest;
+import com.dailyonepage.backend.domain.auth.dto.LogoutRequest;
 import com.dailyonepage.backend.domain.auth.dto.SignupRequest;
 import com.dailyonepage.backend.domain.auth.dto.TokenReissueRequest;
 import com.dailyonepage.backend.domain.auth.dto.TokenResponse;
@@ -110,5 +111,25 @@ public class AuthService {
                 newRefreshToken,
                 jwtProperties.getAccessTokenExpiration()
         );
+    }
+
+    /**
+     * 로그아웃
+     * Refresh Token 무효화 (현재는 stateless이므로 클라이언트에서 토큰 삭제)
+     * TODO: Redis 도입 시 Refresh Token 블랙리스트 추가
+     */
+    public void logout(LogoutRequest request) {
+        String refreshToken = request.getRefreshToken();
+
+        // Refresh Token 유효성 검증
+        if (!jwtTokenProvider.validateToken(refreshToken)) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+
+        String email = jwtTokenProvider.getEmailFromToken(refreshToken);
+        log.info("로그아웃 완료: {}", email);
+
+        // TODO: Redis에 Refresh Token 블랙리스트 추가
+        // redisTemplate.opsForValue().set("blacklist:" + refreshToken, "logout", refreshTokenExpiration);
     }
 }

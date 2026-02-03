@@ -1,6 +1,7 @@
 package com.dailyonepage.backend.domain.habit.service;
 
 import com.dailyonepage.backend.domain.habit.dto.UserHabitCreateRequest;
+import com.dailyonepage.backend.domain.habit.dto.UserHabitDetailResponse;
 import com.dailyonepage.backend.domain.habit.dto.UserHabitListResponse;
 import com.dailyonepage.backend.domain.habit.dto.UserHabitResponse;
 import com.dailyonepage.backend.domain.habit.entity.Habit;
@@ -44,6 +45,21 @@ public class UserHabitService {
                 .toList();
 
         return UserHabitListResponse.from(responses);
+    }
+
+    /**
+     * 내 습관 상세 조회
+     */
+    public UserHabitDetailResponse getMyHabitDetail(Long userId, Long userHabitId) {
+        UserHabit userHabit = userHabitRepository.findByIdWithHabit(userHabitId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_HABIT_NOT_FOUND));
+
+        // 본인 것만 조회 가능
+        if (!userHabit.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        return UserHabitDetailResponse.from(userHabit);
     }
 
     /**
